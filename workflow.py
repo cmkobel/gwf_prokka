@@ -21,9 +21,15 @@ def prokka(infile, infile_stem): #, outfile):
     
     inputs  = [infile]
     outputs = ['output/' + prefix + '/completed.txt']
-    options = {'nodes': 1, 'cores': 8, 'memory': '1g', 'walltime': '03:00:00', 'account': 'ClinicalMicrobio'} # initially 2 hours
+    options = {'nodes': 1, 'cores': 8, 'memory': '2g', 'walltime': '03:00:00', 'account': 'ClinicalMicrobio'} # initially 2 hours
     spec = """
 prokka --cpu 8 --outdir output/{prefix} --prefix {prefix} {infile} && echo $(date) $SLURM_JOBID {infile} >> output/{prefix}/completed.txt
+echo $SLURM_JOBID
+
+echo -e "\n\n" >> completed.txt
+echo $SLURM_JOBID >> completed.txt
+jobinfo $SLURM_JOBID >> completed.txt
+
 
 """.format(infile = infile,
            infile_stem = infile_stem,
@@ -35,14 +41,17 @@ prokka --cpu 8 --outdir output/{prefix} --prefix {prefix} {infile} && echo $(dat
 
 
 
+
 file_stems = os.listdir(fasta_dir)
 print('number of files to consider:', len(file_stems))
+#print(file_stems)
 
 
 for i, file_stem in enumerate(file_stems):
-    input_file = fasta_dir + str(file_stem)
-    
-    gwf.target_from_template('prokka_' + str(i) + '_' + file_stem.replace('-', '_'), prokka(infile = input_file, infile_stem = file_stem))    
+    if file_stem.split('.')[-1] in ['fasta', 'fa', 'fsa', 'fna', 'fsa']: # check that the file type is supported
+        input_file = fasta_dir + str(file_stem)
+        
+        gwf.target_from_template('prokka_' + str(i) + '_' + file_stem.replace('-', '_'), prokka(infile = input_file, infile_stem = file_stem))    
 
 
 
